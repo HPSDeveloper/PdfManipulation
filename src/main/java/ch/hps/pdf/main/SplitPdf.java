@@ -22,7 +22,7 @@ public class SplitPdf {
 
     public static void main(String[] args) throws IOException {
 
-        String dateInString =new SimpleDateFormat(DATE_PATTERN).format(new Date());
+        String dateInString = new SimpleDateFormat(DATE_PATTERN).format(new Date());
 
         //Loading an existing PDF document
         File file = new File(BASE_DIR + IN_FILE_NAME);
