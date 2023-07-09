@@ -1,32 +1,47 @@
 package ch.hps.pdf.main;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.pdmodel.PDDocument;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.NoSuchFileException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Stream;
 
+/**
+ * Reads all PDF files in the current working directory and writes ist pages to different
+ * new files into the working directories 'splittedPdfs' subfolder.
+ * If for such source PDF with the same base name a txt file exists, that defines lines like
+ * <Target PDF Name>;<Start_Page_Nbr>
+ * then this definition as start number and target PDF file name (extended).
+ */
 public class SplitPdf {
-    private static String DATE_PATTERN = "yyyy.MM.dd";
-    private static String BASE_DIR = "C:\\tmp\\zahlungen\\";
-    private static String IN_FILE_NAME = "IMG_20210501_0001.pdf";
+    private static String DATE_PATTERN = "yyyyMMddhhmmss";
+    private static String BASE_DIR = null;
+    private static String OUT_DIR_NAME = "splittedPdfs";
 
     public static void main(String[] args) throws IOException {
+        BASE_DIR = System.getProperty("user.dir");
+        Files.createDirectories(Paths.get(BASE_DIR + "/" + OUT_DIR_NAME));
+        File[] pdfsToSplit = getPdfsToSplitFromCurrentDirectory();
+        for(File pdfToSplit : pdfsToSplit){
+            splitFile(pdfToSplit);
+        }
+    }
 
+    private static void splitFile(File pdfToSplit) throws IOException {
         String dateInString = new SimpleDateFormat(DATE_PATTERN).format(new Date());
 
         //Loading an existing PDF document
-        File file = new File(BASE_DIR + IN_FILE_NAME);
-        PDDocument doc = PDDocument.load(file);
+        PDDocument doc = PDDocument.load(pdfToSplit);
 
         //Instantiating Splitter class
         Splitter splitter = new Splitter();
@@ -35,7 +50,7 @@ public class SplitPdf {
         List<PDDocument> pages = splitter.split(doc);
         System.out.println("PDF splitted");
 
-        List<SplitDef> splitDefs = getSplitMap(pages.size());
+        List<SplitDef> splitDefs = getSplitMap(pages.size(), pdfToSplit);
         int pageNbr=1;
         int mergedDocCntr=1;
         for(SplitDef splitDef : splitDefs){
@@ -49,23 +64,37 @@ public class SplitPdf {
                 pageNbr++;
             }
             mergerUtility.mergeDocuments();
-            File file1 = new File(BASE_DIR + "out\\"  + dateInString + "_" + mergedDocCntr + "_" + splitDef.getDocName() + ".pdf");
-            file1.createNewFile();
-            document.save(BASE_DIR + "out\\" + dateInString + "_"  + mergedDocCntr + "_" + splitDef.getDocName()  + ".pdf");
+            File outFile = new File(BASE_DIR + "/" + OUT_DIR_NAME + "/"  + pdfToSplit.getName().replaceAll("\\.pdf$", "") + "_" + dateInString + "_" + mergedDocCntr + "_" + splitDef.getDocName() + ".pdf");
+            outFile.createNewFile();
+            document.save(outFile.getAbsolutePath());
             mergedDocCntr++;
         }
         System.out.println("Documents merged");
+    }
+
+    private static File[] getPdfsToSplitFromCurrentDirectory() throws IOException {
+        File dir = new File(".");
+        return dir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".pdf"); // && Files.exists(Paths.get(replaceExtension(dir + "/" + name, "txt")));
+            }
+        });
 
     }
 
-    private static List<SplitDef> getSplitMap(int size) {
+    private static List<SplitDef> getSplitMap(int size, File pdfToSplit) {
         List<SplitDef> splitDefs = new ArrayList<>();
-        try (Stream<String> stream = Files.lines(Paths.get(BASE_DIR + replaceExtension(IN_FILE_NAME, "txt")))) {
+        try (Stream<String> stream = Files.lines(Paths.get( replaceExtension(pdfToSplit.getAbsolutePath(), "txt")))) {
             stream.forEach(line -> {
                 System.out.println(line);
                 splitDefs.add(SplitDef.fromString(line));
             });
-        } catch (IOException e) {
+        } catch (NoSuchFileException e) {
+            for(int i = 1; i <= size; i++){
+                splitDefs.add(SplitDef.fromString("Page_" + i + ";" + i));
+            }
+        }catch (IOException e){
             e.printStackTrace();
         }
 
@@ -84,6 +113,10 @@ public class SplitPdf {
         }
     }
 
+    /**
+     * Defines the page number within the source document where the extraction into the new document should start
+     * plus the title (extended) of the new document.
+     */
     private static class SplitDef {
         String getDocName() {
             return docName;

@@ -27,6 +27,21 @@
                     <target>${java.version}</target>
                 </configuration>
             </plugin>
+            <plugin>
+                <!-- This plugin provides that the generated JAR when double clicked executes the mentioned main class
+                     and the dependencies are packed -->
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <mainClass>ch.hps.pdf.main.SplitPdf</mainClass>
+                        </manifest>
+                    </archive>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
