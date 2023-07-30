@@ -21,7 +21,7 @@ import java.util.stream.Stream;
  * new files into the working directories 'splittedPdfs' subfolder.
  * If for such source PDF with the same base name a txt file exists, that defines lines like
  * <Target PDF Name>;<Start_Page_Nbr>
- * then this definition as start number and target PDF file name (extended).
+ * then this definition serves as start page number of the split and target PDF file name (extended).
  */
 public class SplitPdf {
     private static String DATE_PATTERN = "yyyyMMddhhmmss";
