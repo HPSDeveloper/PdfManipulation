@@ -12,4 +12,7 @@ If you want the split markers not on every page, but at dedicated pages, then pl
 Each line of that TXT file must contain a string and a number separated by a ';'. The String is the file name part, that will be given to the extracted PDF and the number is the starting page of the extraction.
 The ending page of the extraction is defined by the next line. (You have to define a subsequent sequence begin in order to exclude that from your preceding result document.)
 
+The TXT file must not contain underscores ("_")!
+
+
 
