@@ -12,4 +12,7 @@ If you don't want to split the PDF between every page but at dedicated pages, th
 Each line of that TXT file must contain a text and a number separated by a ';'. The text is the file name part, that will be given to the extracted PDF and the number is the starting page of the extraction.
 The ending page of the extraction is defined by the next line. (You have to define a subsequent pdf extract in order to exclude those pages from your preceding result document.)
 
+The TXT file must not contain underscores ("_")!
+
+
 
